@@ -10,17 +10,20 @@ $totalRooms  = $db->query("SELECT COUNT(*) FROM tin_dang WHERE trang_thai='da_du
 $totalUsers  = $db->query("SELECT COUNT(*) FROM users WHERE role='user'")->fetch_row()[0];
 $totalCities = $db->query("SELECT COUNT(DISTINCT k.tinh_thanh) FROM tin_dang td JOIN phong_tro p ON td.phong_tro_id = p.id JOIN khu_vuc k ON p.khu_vuc_id = k.id WHERE td.trang_thai='da_duyet'")->fetch_row()[0];
 
+$tienNghi = ['Điều hòa', 'Nóng lạnh', 'WC riêng', 'Ban công', 'Full nội thất', 'Điện nước riêng', 'Sân để xe', 'Sân vườn'];
+
 // Tìm kiếm
 $search      = trim($_GET['q'] ?? '');
 $tinh_thanh  = trim($_GET['tinh_thanh'] ?? '');
 $loai_id     = (int)($_GET['loai'] ?? 0);
+$tien_nghi = (string)($_GET['tien_nghi'] ?? 'Tất cả');
 $gia_min     = (int)($_GET['gia_min'] ?? 0);
 $gia_max     = (int)($_GET['gia_max'] ?? 0);
 $dt_min      = (int)($_GET['dt_min'] ?? 0);
 $dt_max      = (int)($_GET['dt_max'] ?? 0);
 $sort        = $_GET['sort'] ?? 'newest';
 $page_num    = max(1, (int)($_GET['page'] ?? 1));
-$per_page    = 9;
+$per_page    = 6;
 
 // Danh sách sort hợp lệ
 $sortOptions = [
@@ -53,6 +56,11 @@ if ($loai_id > 0) {
     $where[]  = "p.loai_phong_id = ?";
     $params[] = $loai_id;
     $types   .= 'i';
+}
+if ($tien_nghi != '' && $tien_nghi != 'Tất cả') {
+    $where[]  = "p.tien_nghi LIKE ?";
+    $params[] = "%$tien_nghi%";
+    $types   .= 's';
 }
 if ($gia_min > 0) {
     $where[]  = "td.gia >= ?";
@@ -246,6 +254,17 @@ $paginateBase = BASE_URL . '/index.php?' . http_build_query($baseParams);
                             <?php foreach ($categories as $cat): ?>
                             <option value="<?= $cat['id'] ?>" <?= $loai_id === $cat['id'] ? 'selected' : '' ?>>
                                 <?= e($cat['ten']) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Tiện ích</label>
+                        <select name="tien_nghi" class="form-select">
+                            <option value="Tất cả">-- Tất cả --</option>
+                            <?php foreach ($tienNghi as $ti): ?>
+                            <option value="<?= $ti ?>" <?= $tien_nghi === $ti ? 'selected' : '' ?>>
+                                <?= e($ti) ?>
                             </option>
                             <?php endforeach; ?>
                         </select>
